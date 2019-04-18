@@ -18,7 +18,7 @@ package colourgo
 
 import (
 	"crypto/rsa"
-	//"encoding/base64"
+	"fmt"
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/golang/protobuf/proto"
 	"time"
@@ -31,9 +31,7 @@ const (
 	COLOUR_HOST_TEST       = "test-colour.aletheiaware.com"
 	COLOUR_WEBSITE         = "https://colour.aletheiaware.com"
 	COLOUR_WEBSITE_TEST    = "https://test-colour.aletheiaware.com"
-	COLOUR_PREFIX          = "Colour-"
-	COLOUR_PREFIX_CANVAS   = "Colour-Canvas-"
-	COLOUR_PREFIX_LOCATION = "Colour-Location-"
+	COLOUR_PREFIX_CANVAS   = "Colour-Canvas-" // Append Year
 	COLOUR_PREFIX_PURCHASE = "Colour-Purchase-"
 	COLOUR_PREFIX_VOTE     = "Colour-Vote-"
 )
@@ -52,20 +50,30 @@ func GetColourWebsite() string {
 	return COLOUR_WEBSITE
 }
 
+func GetYear() string {
+	return fmt.Sprintf("%d", time.Now().Year())
+}
+
 func OpenColourChannel() (*bcgo.Channel, error) {
 	return bcgo.OpenChannel(COLOUR)
+}
+
+func UnmarshalCanvas(data []byte) (*Canvas, error) {
+	canvas := &Canvas{}
+	if err := proto.Unmarshal(data, canvas); err != nil {
+		return nil, err
+	}
+	return canvas, nil
 }
 
 func GetCanvas(canvases *bcgo.Channel, alias string, key *rsa.PrivateKey, recordHash []byte, callback func(*bcgo.BlockEntry, []byte, *Canvas) error) error {
 	return canvases.Read(alias, key, recordHash, func(entry *bcgo.BlockEntry, key, data []byte) error {
 		// Unmarshal as Canvas
-		meta := &Canvas{}
-		if err := proto.Unmarshal(data, meta); err != nil {
-			return err
-		} else if err := callback(entry, key, meta); err != nil {
+		canvas, err := UnmarshalCanvas(data)
+		if err != nil {
 			return err
 		}
-		return nil
+		return callback(entry, key, canvas)
 	})
 }
 
@@ -246,7 +254,7 @@ func GetPurchasedColour(cs *bcgo.Channel, x, y, z uint32) (*Colour, error) {
 	return purchasedColour, nil
 }
 
-func CreatePurchaseRecord(alias string, key *rsa.PrivateKey, x, y, z, red, green, blue, price uint32) (*bcgo.Record, error) {
+func CreatePurchaseRecord(alias string, key *rsa.PrivateKey, x, y, z, red, green, blue, price, tax uint32) (*bcgo.Record, error) {
 	data, err := proto.Marshal(&Purchase{
 		Colour: &Colour{
 			Red:   red,
@@ -259,6 +267,7 @@ func CreatePurchaseRecord(alias string, key *rsa.PrivateKey, x, y, z, red, green
 			Z: z,
 		},
 		Price: price,
+		Tax:   tax,
 	})
 	if err != nil {
 		return nil, err
