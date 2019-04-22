@@ -29,8 +29,6 @@ const (
 
 	COLOUR_HOST            = "colour.aletheiaware.com"
 	COLOUR_HOST_TEST       = "test-colour.aletheiaware.com"
-	COLOUR_WEBSITE         = "https://colour.aletheiaware.com"
-	COLOUR_WEBSITE_TEST    = "https://test-colour.aletheiaware.com"
 	COLOUR_PREFIX_CANVAS   = "Colour-Canvas-" // Append Year
 	COLOUR_PREFIX_PURCHASE = "Colour-Purchase-"
 	COLOUR_PREFIX_VOTE     = "Colour-Vote-"
@@ -44,10 +42,7 @@ func GetColourHost() string {
 }
 
 func GetColourWebsite() string {
-	if bcgo.IsDebug() {
-		return COLOUR_WEBSITE_TEST
-	}
-	return COLOUR_WEBSITE
+	return "https://" + GetColourHost()
 }
 
 func GetYear() string {
