@@ -49,8 +49,8 @@ func GetYear() string {
 	return fmt.Sprintf("%d", time.Now().Year())
 }
 
-func OpenColourChannel() (*bcgo.Channel, error) {
-	return bcgo.OpenChannel(COLOUR)
+func OpenCanvasChannel() *bcgo.PoWChannel {
+	return bcgo.OpenPoWChannel(COLOUR_PREFIX_CANVAS+GetYear(), bcgo.THRESHOLD_STANDARD)
 }
 
 func UnmarshalCanvas(data []byte) (*Canvas, error) {
@@ -61,9 +61,24 @@ func UnmarshalCanvas(data []byte) (*Canvas, error) {
 	return canvas, nil
 }
 
-func GetCanvas(canvases *bcgo.Channel, alias string, key *rsa.PrivateKey, recordHash []byte, callback func(*bcgo.BlockEntry, []byte, *Canvas) error) error {
-	return canvases.Read(alias, key, recordHash, func(entry *bcgo.BlockEntry, key, data []byte) error {
-		// Unmarshal as Canvas
+func UnmarshalPurchase(data []byte) (*Purchase, error) {
+	purchase := &Purchase{}
+	if err := proto.Unmarshal(data, purchase); err != nil {
+		return nil, err
+	}
+	return purchase, nil
+}
+
+func UnmarshalVote(data []byte) (*Vote, error) {
+	vote := &Vote{}
+	if err := proto.Unmarshal(data, vote); err != nil {
+		return nil, err
+	}
+	return vote, nil
+}
+
+func GetCanvas(canvases bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string, key *rsa.PrivateKey, recordHash []byte, callback func(*bcgo.BlockEntry, []byte, *Canvas) error) error {
+	return bcgo.Read(canvases.GetName(), canvases.GetHead(), nil, cache, network, alias, key, recordHash, func(entry *bcgo.BlockEntry, key, data []byte) error {
 		canvas, err := UnmarshalCanvas(data)
 		if err != nil {
 			return err
@@ -72,45 +87,34 @@ func GetCanvas(canvases *bcgo.Channel, alias string, key *rsa.PrivateKey, record
 	})
 }
 
-func GetVotes(cs *bcgo.Channel, alias string) ([]*Vote, error) {
+func GetVotes(cs bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string) ([]*Vote, error) {
 	votes := make([]*Vote, 0)
-	b := cs.HeadBlock
-	for b != nil {
-		for _, e := range b.Entry {
-			r := e.Record
-			if r.Creator == alias {
-				v := &Vote{}
-				err := proto.Unmarshal(r.Payload, v)
+	if err := bcgo.Iterate(cs.GetName(), cs.GetHead(), nil, cache, network, func(hash []byte, block *bcgo.Block) error {
+		for _, entry := range block.Entry {
+			record := entry.Record
+			if record.Creator == alias {
+				v, err := UnmarshalVote(record.Payload)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				votes = append(votes, v)
 			}
 		}
-		h := b.Previous
-		if h != nil && len(h) > 0 {
-			var err error
-			b, err = bcgo.ReadBlockFile(cs.Cache, h)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			b = nil
-		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	return votes, nil
 }
 
-func GetVotedColour(cs *bcgo.Channel, x, y, z uint32) (*Colour, error) {
+func GetVotedColour(cs bcgo.Channel, cache bcgo.Cache, network bcgo.Network, x, y, z uint32) (*Colour, error) {
 	var colours map[*Colour]int
-	b := cs.HeadBlock
-	for b != nil {
-		for _, e := range b.Entry {
-			r := e.Record
-			v := &Vote{}
-			err := proto.Unmarshal(r.Payload, v)
+	if err := bcgo.Iterate(cs.GetName(), cs.GetHead(), nil, cache, network, func(hash []byte, block *bcgo.Block) error {
+		for _, entry := range block.Entry {
+			record := entry.Record
+			v, err := UnmarshalVote(record.Payload)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			l := v.Location
 			if l.X == x && l.Y == y && l.Z == z {
@@ -121,16 +125,9 @@ func GetVotedColour(cs *bcgo.Channel, x, y, z uint32) (*Colour, error) {
 				colours[v.Colour] = count
 			}
 		}
-		h := b.Previous
-		if h != nil && len(h) > 0 {
-			var err error
-			b, err = bcgo.ReadBlockFile(cs.Cache, h)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			b = nil
-		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	var maxColour *Colour
 	maxCount := 0
@@ -175,49 +172,35 @@ func CreateVoteRecord(alias string, key *rsa.PrivateKey, x, y, z, red, green, bl
 	}, nil
 }
 
-func GetPurchases(cs *bcgo.Channel, alias string) ([]*Purchase, error) {
+func GetPurchases(cs bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string) ([]*Purchase, error) {
 	purchases := make([]*Purchase, 0)
-	b := cs.HeadBlock
-	for b != nil {
-		for _, e := range b.Entry {
-			r := e.Record
-			if r.Creator == alias {
-				p := &Purchase{}
-				err := proto.Unmarshal(r.Payload, p)
+	if err := bcgo.Iterate(cs.GetName(), cs.GetHead(), nil, cache, network, func(hash []byte, block *bcgo.Block) error {
+		for _, entry := range block.Entry {
+			record := entry.Record
+			if record.Creator == alias {
+				p, err := UnmarshalPurchase(record.Payload)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				purchases = append(purchases, p)
 			}
 		}
-		h := b.Previous
-		if h != nil && len(h) > 0 {
-			var err error
-			b, err = bcgo.ReadBlockFile(cs.Cache, h)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			b = nil
-		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	return purchases, nil
 }
 
-func GetPurchasedColour(cs *bcgo.Channel, x, y, z uint32) (*Colour, error) {
+func GetPurchasedColour(cs bcgo.Channel, cache bcgo.Cache, network bcgo.Network, x, y, z uint32) (*Colour, error) {
 	var colours map[*Colour]uint32
 	var purchasedColour *Colour
-	b := cs.HeadBlock
-	// For Each Existing Block
-	for b != nil {
-		// For Each Existing Entry
-		for _, e := range b.Entry {
-			// Reach Purchase
-			r := e.Record
-			p := &Purchase{}
-			err := proto.Unmarshal(r.Payload, p)
+	if err := bcgo.Iterate(cs.GetName(), cs.GetHead(), nil, cache, network, func(hash []byte, block *bcgo.Block) error {
+		for _, entry := range block.Entry {
+			record := entry.Record
+			p, err := UnmarshalPurchase(record.Payload)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			l := p.Location
 			// If Location Matches Query
@@ -235,16 +218,9 @@ func GetPurchasedColour(cs *bcgo.Channel, x, y, z uint32) (*Colour, error) {
 				}
 			}
 		}
-		h := b.Previous
-		if h != nil && len(h) > 0 {
-			var err error
-			b, err = bcgo.ReadBlockFile(cs.Cache, h)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			b = nil
-		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	return purchasedColour, nil
 }
