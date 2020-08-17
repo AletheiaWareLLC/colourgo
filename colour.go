@@ -52,3 +52,11 @@ func GetYear() string {
 func OpenCanvasChannel() *bcgo.Channel {
 	return bcgo.OpenPoWChannel(COLOUR_PREFIX_CANVAS+GetYear(), COLOUR_THRESHOLD)
 }
+
+func OpenPurchaseChannel(id string) *bcgo.Channel {
+	return bcgo.OpenPoWChannel(COLOUR_PREFIX_PURCHASE+id, COLOUR_THRESHOLD)
+}
+
+func OpenVoteChannel(id string) *bcgo.Channel {
+	return bcgo.OpenPoWChannel(COLOUR_PREFIX_VOTE+id, COLOUR_THRESHOLD)
+}
