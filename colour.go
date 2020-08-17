@@ -63,7 +63,7 @@ func UnmarshalCanvas(data []byte) (*Canvas, error) {
 	return canvas, nil
 }
 
-func GetCanvas(canvases bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string, key *rsa.PrivateKey, recordHash []byte, callback func(*bcgo.BlockEntry, []byte, *Canvas) error) error {
+func GetCanvas(canvases *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string, key *rsa.PrivateKey, recordHash []byte, callback func(*bcgo.BlockEntry, []byte, *Canvas) error) error {
 	return bcgo.Read(canvases.Name, canvases.Head, nil, cache, network, alias, key, recordHash, func(entry *bcgo.BlockEntry, key, data []byte) error {
 		canvas, err := UnmarshalCanvas(data)
 		if err != nil {

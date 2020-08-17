@@ -31,7 +31,7 @@ func UnmarshalVote(data []byte) (*Vote, error) {
 	return vote, nil
 }
 
-func GetVotes(cs bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string) ([]*Vote, error) {
+func GetVotes(cs *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string) ([]*Vote, error) {
 	votes := make([]*Vote, 0)
 	if err := bcgo.Iterate(cs.Name, cs.Head, nil, cache, network, func(hash []byte, block *bcgo.Block) error {
 		for _, entry := range block.Entry {
@@ -51,7 +51,7 @@ func GetVotes(cs bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias str
 	return votes, nil
 }
 
-func GetVotedColour(cs bcgo.Channel, cache bcgo.Cache, network bcgo.Network, x, y, z uint32) (*Colour, error) {
+func GetVotedColour(cs *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, x, y, z uint32) (*Colour, error) {
 	var colours map[*Colour]int
 	if err := bcgo.Iterate(cs.Name, cs.Head, nil, cache, network, func(hash []byte, block *bcgo.Block) error {
 		for _, entry := range block.Entry {
