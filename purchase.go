@@ -31,30 +31,24 @@ func UnmarshalPurchase(data []byte) (*Purchase, error) {
 	return purchase, nil
 }
 
-func GetPurchases(cs *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string) ([]*Purchase, error) {
-	purchases := make([]*Purchase, 0)
-	if err := bcgo.Iterate(cs.Name, cs.Head, nil, cache, network, func(hash []byte, block *bcgo.Block) error {
+func GetPurchases(purchases *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, callback func(*bcgo.BlockEntry, *Purchase) error) error {
+	return bcgo.Iterate(purchases.Name, purchases.Head, nil, cache, network, func(hash []byte, block *bcgo.Block) error {
 		for _, entry := range block.Entry {
 			record := entry.Record
-			if record.Creator == alias {
-				p, err := UnmarshalPurchase(record.Payload)
-				if err != nil {
-					return err
-				}
-				purchases = append(purchases, p)
+			p, err := UnmarshalPurchase(record.Payload)
+			if err != nil {
+				return err
 			}
+			callback(entry, p)
 		}
 		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return purchases, nil
+	})
 }
 
-func GetPurchasedColour(cs *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, x, y, z uint32) (*Colour, error) {
+func GetPurchasedColour(purchases *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, x, y, z uint32) (*Colour, error) {
 	var colours map[*Colour]uint32
 	var purchasedColour *Colour
-	if err := bcgo.Iterate(cs.Name, cs.Head, nil, cache, network, func(hash []byte, block *bcgo.Block) error {
+	if err := bcgo.Iterate(purchases.Name, purchases.Head, nil, cache, network, func(hash []byte, block *bcgo.Block) error {
 		for _, entry := range block.Entry {
 			record := entry.Record
 			p, err := UnmarshalPurchase(record.Payload)
