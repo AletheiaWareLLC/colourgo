@@ -78,8 +78,8 @@ func GetPurchasedColour(purchases *bcgo.Channel, cache bcgo.Cache, network bcgo.
 	return purchasedColour, nil
 }
 
-func CreatePurchaseRecord(alias string, key *rsa.PrivateKey, w, x, y, z, red, green, blue, alpha, price, tax uint32) (*bcgo.Record, error) {
-	data, err := proto.Marshal(&Purchase{
+func CreatePurchase(w, x, y, z, red, green, blue, alpha, price, tax uint32) *Purchase {
+	return &Purchase{
 		Colour: &Colour{
 			Red:   red,
 			Green: green,
@@ -94,7 +94,11 @@ func CreatePurchaseRecord(alias string, key *rsa.PrivateKey, w, x, y, z, red, gr
 		},
 		Price: price,
 		Tax:   tax,
-	})
+	}
+}
+
+func CreatePurchaseRecord(alias string, key *rsa.PrivateKey, purchase *Purchase) (*bcgo.Record, error) {
+	data, err := proto.Marshal(purchase)
 	if err != nil {
 		return nil, err
 	}

@@ -78,8 +78,8 @@ func GetVotedColour(votes *bcgo.Channel, cache bcgo.Cache, network bcgo.Network,
 	return maxColour, nil
 }
 
-func CreateVoteRecord(alias string, key *rsa.PrivateKey, w, x, y, z, red, green, blue, alpha uint32) (*bcgo.Record, error) {
-	data, err := proto.Marshal(&Vote{
+func CreateVote(w, x, y, z, red, green, blue, alpha uint32) *Vote {
+	return &Vote{
 		Colour: &Colour{
 			Red:   red,
 			Green: green,
@@ -92,7 +92,11 @@ func CreateVoteRecord(alias string, key *rsa.PrivateKey, w, x, y, z, red, green,
 			Y: y,
 			Z: z,
 		},
-	})
+	}
+}
+
+func CreateVoteRecord(alias string, key *rsa.PrivateKey, vote *Vote) (*bcgo.Record, error) {
+	data, err := proto.Marshal(vote)
 	if err != nil {
 		return nil, err
 	}
