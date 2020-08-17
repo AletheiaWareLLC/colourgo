@@ -17,10 +17,8 @@
 package colourgo
 
 import (
-	"crypto/rsa"
 	"fmt"
 	"github.com/AletheiaWareLLC/bcgo"
-	"github.com/golang/protobuf/proto"
 	"time"
 )
 
@@ -53,22 +51,4 @@ func GetYear() string {
 
 func OpenCanvasChannel() *bcgo.Channel {
 	return bcgo.OpenPoWChannel(COLOUR_PREFIX_CANVAS+GetYear(), COLOUR_THRESHOLD)
-}
-
-func UnmarshalCanvas(data []byte) (*Canvas, error) {
-	canvas := &Canvas{}
-	if err := proto.Unmarshal(data, canvas); err != nil {
-		return nil, err
-	}
-	return canvas, nil
-}
-
-func GetCanvas(canvases *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, alias string, key *rsa.PrivateKey, recordHash []byte, callback func(*bcgo.BlockEntry, []byte, *Canvas) error) error {
-	return bcgo.Read(canvases.Name, canvases.Head, nil, cache, network, alias, key, recordHash, func(entry *bcgo.BlockEntry, key, data []byte) error {
-		canvas, err := UnmarshalCanvas(data)
-		if err != nil {
-			return err
-		}
-		return callback(entry, key, canvas)
-	})
 }
