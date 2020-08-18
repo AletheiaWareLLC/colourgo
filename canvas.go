@@ -19,6 +19,7 @@ package colourgo
 import (
 	"crypto/rsa"
 	"github.com/AletheiaWareLLC/bcgo"
+	"github.com/AletheiaWareLLC/cryptogo"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -38,4 +39,35 @@ func GetCanvas(canvases *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, a
 		}
 		return callback(entry, key, canvas)
 	})
+}
+
+func CreateCanvas(name string, w, h, d uint32, mode Mode) *Canvas {
+	return &Canvas{
+		Name:   name,
+		Width:  w,
+		Height: h,
+		Depth:  d,
+		Mode:   mode,
+	}
+}
+
+func CreateCanvasRecord(alias string, key *rsa.PrivateKey, canvas *Canvas) (*bcgo.Record, error) {
+	data, err := proto.Marshal(canvas)
+	if err != nil {
+		return nil, err
+	}
+
+	signature, err := cryptogo.CreateSignature(key, cryptogo.Hash(data), cryptogo.SignatureAlgorithm_SHA512WITHRSA_PSS)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bcgo.Record{
+		Timestamp:           bcgo.Timestamp(),
+		Creator:             alias,
+		Payload:             data,
+		EncryptionAlgorithm: cryptogo.EncryptionAlgorithm_UNKNOWN_ENCRYPTION,
+		Signature:           signature,
+		SignatureAlgorithm:  cryptogo.SignatureAlgorithm_SHA512WITHRSA_PSS,
+	}, nil
 }
