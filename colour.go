@@ -53,14 +53,22 @@ func GetCanvasChannelName() string {
 	return COLOUR_PREFIX_CANVAS + GetYear()
 }
 
+func GetPurchaseChannelName(id string) string {
+	return COLOUR_PREFIX_PURCHASE + id
+}
+
+func GetVoteChannelName(id string) string {
+	return COLOUR_PREFIX_VOTE + id
+}
+
 func OpenCanvasChannel() *bcgo.Channel {
 	return bcgo.OpenPoWChannel(GetCanvasChannelName(), COLOUR_THRESHOLD)
 }
 
 func OpenPurchaseChannel(id string) *bcgo.Channel {
-	return bcgo.OpenPoWChannel(COLOUR_PREFIX_PURCHASE+id, COLOUR_THRESHOLD)
+	return bcgo.OpenPoWChannel(GetPurchaseChannelName(id), COLOUR_THRESHOLD)
 }
 
 func OpenVoteChannel(id string) *bcgo.Channel {
-	return bcgo.OpenPoWChannel(COLOUR_PREFIX_VOTE+id, COLOUR_THRESHOLD)
+	return bcgo.OpenPoWChannel(GetVoteChannelName(id), COLOUR_THRESHOLD)
 }
