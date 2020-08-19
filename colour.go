@@ -49,8 +49,12 @@ func GetYear() string {
 	return fmt.Sprintf("%d", time.Now().UTC().Year())
 }
 
+func GetCanvasChannelName() string {
+	return COLOUR_PREFIX_CANVAS + GetYear()
+}
+
 func OpenCanvasChannel() *bcgo.Channel {
-	return bcgo.OpenPoWChannel(COLOUR_PREFIX_CANVAS+GetYear(), COLOUR_THRESHOLD)
+	return bcgo.OpenPoWChannel(GetCanvasChannelName(), COLOUR_THRESHOLD)
 }
 
 func OpenPurchaseChannel(id string) *bcgo.Channel {
