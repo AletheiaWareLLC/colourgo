@@ -19,7 +19,6 @@ package colourgo
 import (
 	"crypto/rsa"
 	"github.com/AletheiaWareLLC/bcgo"
-	"github.com/AletheiaWareLLC/cryptogo"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -102,16 +101,5 @@ func CreatePurchaseRecord(alias string, key *rsa.PrivateKey, purchase *Purchase)
 	if err != nil {
 		return nil, err
 	}
-	signature, err := cryptogo.CreateSignature(key, cryptogo.Hash(data), cryptogo.SignatureAlgorithm_SHA512WITHRSA_PSS)
-	if err != nil {
-		return nil, err
-	}
-	return &bcgo.Record{
-		Timestamp:           bcgo.Timestamp(),
-		Creator:             alias,
-		Payload:             data,
-		EncryptionAlgorithm: cryptogo.EncryptionAlgorithm_UNKNOWN_ENCRYPTION,
-		Signature:           signature,
-		SignatureAlgorithm:  cryptogo.SignatureAlgorithm_SHA512WITHRSA_PSS,
-	}, nil
+	return CreateRecord(alias, key, data)
 }
