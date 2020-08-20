@@ -29,6 +29,7 @@ const (
 
 	COLOUR_HOST            = "colour.aletheiaware.com"
 	COLOUR_HOST_TEST       = "test-colour.aletheiaware.com"
+	COLOUR_PREFIX          = "Colour-"
 	COLOUR_PREFIX_CANVAS   = "Colour-Canvas-" // Append Year
 	COLOUR_PREFIX_PURCHASE = "Colour-Purchase-"
 	COLOUR_PREFIX_VOTE     = "Colour-Vote-"
