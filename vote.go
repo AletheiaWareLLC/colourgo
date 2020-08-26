@@ -30,9 +30,9 @@ type VoteModel struct {
 	Votes map[string]*Vote
 }
 
-func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel) *VoteModel {
+func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel, callback func()) *VoteModel {
 	m := &VoteModel{
-		BaseModel: *NewBaseModel(node, listener, id, canvas, channel),
+		BaseModel: *NewBaseModel(node, listener, id, canvas, channel, callback),
 		Votes:     make(map[string]*Vote),
 	}
 	trigger := func() {
@@ -100,9 +100,9 @@ type FreeForAllModel struct {
 	VoteModel
 }
 
-func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel) *FreeForAllModel {
+func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel, callback func()) *FreeForAllModel {
 	return &FreeForAllModel{
-		VoteModel: *NewVoteModel(node, listener, id, canvas, channel),
+		VoteModel: *NewVoteModel(node, listener, id, canvas, channel, callback),
 	}
 }
 

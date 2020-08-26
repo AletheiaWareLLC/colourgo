@@ -40,13 +40,14 @@ type BaseModel struct {
 	Order      []string
 }
 
-func NewBaseModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel) *BaseModel {
+func NewBaseModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel, callback func()) *BaseModel {
 	m := &BaseModel{
 		Node:     node,
 		Listener: listener,
 		ID:       id,
 		Canvas:   canvas,
 		Channel:  channel,
+		OnUpdate: callback,
 		Entries:  make(map[string]*bcgo.BlockEntry),
 	}
 	go m.Channel.Refresh(node.Cache, node.Network)

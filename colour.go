@@ -76,39 +76,39 @@ func OpenVoteChannel(id string) *bcgo.Channel {
 	return bcgo.OpenPoWChannel(GetVoteChannelName(id), COLOUR_THRESHOLD)
 }
 
-func GetModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas) (Model, error) {
+func GetModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, callback func()) (Model, error) {
 	switch canvas.Mode {
 	case Mode_FREE_FOR_ALL:
 		name := GetVoteChannelName(id)
 		channel := node.GetOrOpenChannel(name, func() *bcgo.Channel {
 			return OpenVoteChannel(id)
 		})
-		return NewFreeForAllModel(node, listener, id, canvas, channel), nil
+		return NewFreeForAllModel(node, listener, id, canvas, channel, callback), nil
 		/* TODO
 		   case Mode_DEMOCRACY:
 		       name := GetVoteChannelName(id)
 		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
 		           return OpenVoteChannel(id)
 		       })
-		       return NewDemocracyModel(node, listener, id, canvas, channel), nil
+		       return NewDemocracyModel(node, listener, id, canvas, channel, callback), nil
 		   case Mode_RADICAL_DEMOCRACY:
 		       name := GetVoteChannelName(id)
 		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
 		           return OpenVoteChannel(id)
 		       })
-		       return NewRadicalDemocracyModel(node, listener, id, canvas, channel), nil
+		       return NewRadicalDemocracyModel(node, listener, id, canvas, channel, callback), nil
 		   case Mode_MARKET:
 		       name := GetPurchaseChannelName(id)
 		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
 		           return OpenPurchaseChannel(id)
 		       })
-		       return NewMarketModel(node, listener, id, canvas, channel), nil
+		       return NewMarketModel(node, listener, id, canvas, channel, callback), nil
 		   case Mode_RADICAL_MARKET:
 		       name := GetPurchaseChannelName(id)
 		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
 		           return OpenPurchaseChannel(id)
 		       })
-		       return NewRadicalMarketModel(node, listener, id, canvas, channel), nil
+		       return NewRadicalMarketModel(node, listener, id, canvas, channel, callback), nil
 		*/
 	case Mode_UNKNOWN_MODE:
 		fallthrough
