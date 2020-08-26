@@ -18,9 +18,106 @@ package colourgo
 
 import (
 	"crypto/rsa"
+	"encoding/base64"
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/golang/protobuf/proto"
+	"log"
+	"sort"
 )
+
+type VoteModel struct {
+	BaseModel
+	Votes map[string]*Vote
+}
+
+func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel) *VoteModel {
+	m := &VoteModel{
+		BaseModel: *NewBaseModel(node, listener, id, canvas, channel),
+		Votes:     make(map[string]*Vote),
+	}
+	trigger := func() {
+		m.Lock()
+		m.IsUpdating = true
+		if err := GetVotes(m.Channel, m.Node.Cache, m.Node.Network, func(entry *bcgo.BlockEntry, vote *Vote) error {
+			id := base64.RawURLEncoding.EncodeToString(entry.RecordHash)
+			_, ok := m.Votes[id]
+			if ok {
+				return bcgo.StopIterationError{}
+			} else {
+				m.Votes[id] = vote
+				m.Entries[id] = entry
+				m.Order = append(m.Order, id)
+			}
+			return nil
+		}); err != nil {
+			switch err.(type) {
+			case bcgo.StopIterationError:
+				// Do nothing
+			default:
+				log.Println(err)
+			}
+		}
+		sort.Slice(m.Order, func(i, j int) bool {
+			return m.Entries[m.Order[i]].Record.Timestamp < m.Entries[m.Order[j]].Record.Timestamp
+		})
+		m.IsUpdating = false
+		m.Unlock()
+		if f := m.OnUpdate; f != nil {
+			f()
+		}
+		go func() {
+			if err := m.Mine(); err != nil {
+				log.Println(err)
+			}
+		}()
+	}
+	m.Channel.AddTrigger(trigger)
+	trigger()
+	return m
+}
+
+func (m *VoteModel) Append(v *Vote) error {
+	record, err := CreateVoteRecord(m.Node.Alias, m.Node.Key, v)
+	if err != nil {
+		return err
+	}
+	_, err = bcgo.WriteRecord(m.Channel.Name, m.Node.Cache, record)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *VoteModel) Write(l *Location, c *Colour) error {
+	return m.Append(&Vote{
+		Colour:   c,
+		Location: l,
+	})
+}
+
+type FreeForAllModel struct {
+	VoteModel
+}
+
+func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel) *FreeForAllModel {
+	return &FreeForAllModel{
+		VoteModel: *NewVoteModel(node, listener, id, canvas, channel),
+	}
+}
+
+func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
+	if m.IsUpdating {
+		// Canvas will be redrawn after update
+		return
+	}
+	for _, id := range m.Order {
+		vote, ok := m.Votes[id]
+		if ok {
+			//log.Println("Vote:", id, m.Entries[id].Record.Timestamp, vote)
+			callback(vote.Location, vote.Colour)
+		}
+	}
+}
 
 func UnmarshalVote(data []byte) (*Vote, error) {
 	vote := &Vote{}
