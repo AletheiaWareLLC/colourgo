@@ -36,6 +36,7 @@ func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 		Votes:     make(map[string]*Vote),
 	}
 	trigger := func() {
+		log.Println("Trigger:", m.Channel.Name)
 		m.Lock()
 		m.IsUpdating = true
 		if err := GetVotes(m.Channel, m.Node.Cache, m.Node.Network, func(entry *bcgo.BlockEntry, vote *Vote) error {

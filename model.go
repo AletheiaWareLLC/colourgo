@@ -24,7 +24,6 @@ import (
 type Model interface {
 	Draw(func(*Location, *Colour))
 	Mine() error
-	Refresh() error
 	Write(*Location, *Colour) error
 }
 
@@ -42,7 +41,7 @@ type BaseModel struct {
 }
 
 func NewBaseModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel) *BaseModel {
-	return &BaseModel{
+	m := &BaseModel{
 		Node:     node,
 		Listener: listener,
 		ID:       id,
@@ -50,6 +49,8 @@ func NewBaseModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 		Channel:  channel,
 		Entries:  make(map[string]*bcgo.BlockEntry),
 	}
+	go m.Channel.Refresh(node.Cache, node.Network)
+	return m
 }
 
 func (m *BaseModel) Draw(func(*Location, *Colour)) {
@@ -70,20 +71,6 @@ func (m *BaseModel) Mine() error {
 	if m.Node.Network != nil {
 		// Push Update to Peers
 		if err := m.Channel.Push(m.Node.Cache, m.Node.Network); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *BaseModel) Refresh() error {
-	// Load Channel
-	if err := m.Channel.LoadCachedHead(m.Node.Cache); err != nil {
-		return err
-	}
-	if m.Node.Network != nil {
-		// Pull Channel
-		if err := m.Channel.Pull(m.Node.Cache, m.Node.Network); err != nil {
 			return err
 		}
 	}
