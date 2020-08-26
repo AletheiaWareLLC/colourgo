@@ -24,6 +24,7 @@ import (
 type Model interface {
 	Draw(func(*Location, *Colour))
 	Mine() error
+	Refresh() error
 	Write(*Location, *Colour) error
 }
 
@@ -50,7 +51,7 @@ func NewBaseModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 		OnUpdate: callback,
 		Entries:  make(map[string]*bcgo.BlockEntry),
 	}
-	go m.Channel.Refresh(node.Cache, node.Network)
+	go m.Refresh()
 	return m
 }
 
@@ -61,6 +62,10 @@ func (m *BaseModel) Draw(func(*Location, *Colour)) {
 func (m *BaseModel) Write(*Location, *Colour) error {
 	// Do nothing
 	return nil
+}
+
+func (m *BaseModel) Refresh() error {
+	return m.Channel.Refresh(m.Node.Cache, m.Node.Network)
 }
 
 func (m *BaseModel) Mine() error {
