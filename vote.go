@@ -104,6 +104,7 @@ func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string
 }
 
 func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
+	log.Println("Drawing:", m.Order)
 	for _, id := range m.Order {
 		vote, ok := m.Votes[id]
 		if ok {
