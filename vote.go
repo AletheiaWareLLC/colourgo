@@ -35,13 +35,13 @@ func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 		BaseModel: *NewBaseModel(node, listener, id, canvas, channel, callback),
 		Votes:     make(map[string]*Vote),
 	}
-	m.Channel.AddTrigger(m.Trigger)
-	go m.Trigger()
+	m.Channel.AddTrigger(m.Read)
+	go m.Read()
 	return m
 }
 
-func (m *VoteModel) Trigger() {
-	log.Println("Trigger:", m.Channel.Name)
+func (m *VoteModel) Read() {
+	log.Println("Read:", m.Channel.Name)
 	m.Lock()
 	if err := GetVotes(m.Channel, m.Node.Cache, m.Node.Network, func(entry *bcgo.BlockEntry, vote *Vote) error {
 		id := base64.RawURLEncoding.EncodeToString(entry.RecordHash)
@@ -51,6 +51,7 @@ func (m *VoteModel) Trigger() {
 			log.Println("Vote already counted")
 			return bcgo.StopIterationError{}
 		} else {
+			log.Println("Counting Vote:", id)
 			m.Votes[id] = vote
 			m.Entries[id] = entry
 			m.Order = append(m.Order, id)
@@ -67,6 +68,7 @@ func (m *VoteModel) Trigger() {
 	sort.Slice(m.Order, func(i, j int) bool {
 		return m.Entries[m.Order[i]].Record.Timestamp < m.Entries[m.Order[j]].Record.Timestamp
 	})
+	log.Println("Read Complete:", m.Channel.Name, m.Order)
 	m.Unlock()
 	go func() {
 		if f := m.OnUpdate; f != nil {

@@ -26,16 +26,16 @@ import (
 	"time"
 )
 
-func awaitTrigger(t *testing.T, triggers chan bool) {
+func awaitRead(t *testing.T, reads chan bool) {
 	select {
-	case <-triggers:
+	case <-reads:
 	// Pass
 	case <-time.After(time.Second):
 		t.Fatal("Timed out waiting for trigger")
 	}
 }
 
-func TestVoteModel_Trigger(t *testing.T) {
+func TestVoteModel_Read(t *testing.T) {
 	cache := bcgo.NewMemoryCache(1)
 	node := &bcgo.Node{
 		Alias:    "TEST_ALIAS",
@@ -51,13 +51,13 @@ func TestVoteModel_Trigger(t *testing.T) {
 		Name: "TEST_CANVAS",
 	}
 	id := "TEST_ID"
-	triggers := make(chan bool, 1)
+	reads := make(chan bool, 1)
 	model := colourgo.NewVoteModel(node, nil, id, canvas, channel, func() {
-		triggers <- true
+		reads <- true
 	})
-	awaitTrigger(t, triggers)
-	model.Trigger()
-	awaitTrigger(t, triggers)
+	awaitRead(t, reads)
+	model.Read()
+	awaitRead(t, reads)
 }
 
 func TestVoteModel_Write(t *testing.T) {
