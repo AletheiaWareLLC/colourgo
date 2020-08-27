@@ -35,48 +35,54 @@ func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 		BaseModel: *NewBaseModel(node, listener, id, canvas, channel, callback),
 		Votes:     make(map[string]*Vote),
 	}
-	trigger := func() {
-		log.Println("Trigger:", m.Channel.Name)
-		m.Lock()
-		if err := GetVotes(m.Channel, m.Node.Cache, m.Node.Network, func(entry *bcgo.BlockEntry, vote *Vote) error {
-			id := base64.RawURLEncoding.EncodeToString(entry.RecordHash)
-			_, ok := m.Votes[id]
-			if ok {
-				return bcgo.StopIterationError{}
-			} else {
-				m.Votes[id] = vote
-				m.Entries[id] = entry
-				m.Order = append(m.Order, id)
-			}
-			return nil
-		}); err != nil {
-			switch err.(type) {
-			case bcgo.StopIterationError:
-				// Do nothing
-			default:
-				log.Println(err)
-			}
-		}
-		sort.Slice(m.Order, func(i, j int) bool {
-			return m.Entries[m.Order[i]].Record.Timestamp < m.Entries[m.Order[j]].Record.Timestamp
-		})
-		m.Unlock()
-		if f := m.OnUpdate; f != nil {
-			f()
-		}
-		go func() {
-			if err := m.Mine(); err != nil {
-				log.Println(err)
-			}
-		}()
-	}
-	m.Channel.AddTrigger(trigger)
-	trigger()
+	m.Channel.AddTrigger(m.Trigger)
+	go m.Trigger()
 	return m
 }
 
-func (m *VoteModel) Append(v *Vote) error {
-	record, err := CreateVoteRecord(m.Node.Alias, m.Node.Key, v)
+func (m *VoteModel) Trigger() {
+	log.Println("Trigger:", m.Channel.Name)
+	m.Lock()
+	if err := GetVotes(m.Channel, m.Node.Cache, m.Node.Network, func(entry *bcgo.BlockEntry, vote *Vote) error {
+		id := base64.RawURLEncoding.EncodeToString(entry.RecordHash)
+		log.Println("Got Vote:", id, entry.Record.Timestamp, vote)
+		_, ok := m.Votes[id]
+		if ok {
+			log.Println("Vote already counted")
+			return bcgo.StopIterationError{}
+		} else {
+			m.Votes[id] = vote
+			m.Entries[id] = entry
+			m.Order = append(m.Order, id)
+		}
+		return nil
+	}); err != nil {
+		switch err.(type) {
+		case bcgo.StopIterationError:
+			// Do nothing
+		default:
+			log.Println(err)
+		}
+	}
+	sort.Slice(m.Order, func(i, j int) bool {
+		return m.Entries[m.Order[i]].Record.Timestamp < m.Entries[m.Order[j]].Record.Timestamp
+	})
+	m.Unlock()
+	go func() {
+		if f := m.OnUpdate; f != nil {
+			f()
+		}
+		if err := m.Mine(); err != nil {
+			log.Println(err)
+		}
+	}()
+}
+
+func (m *VoteModel) Write(l *Location, c *Colour) error {
+	record, err := CreateVoteRecord(m.Node.Alias, m.Node.Key, &Vote{
+		Colour:   c,
+		Location: l,
+	})
 	if err != nil {
 		return err
 	}
@@ -85,13 +91,6 @@ func (m *VoteModel) Append(v *Vote) error {
 		return err
 	}
 	return nil
-}
-
-func (m *VoteModel) Write(l *Location, c *Colour) error {
-	return m.Append(&Vote{
-		Colour:   c,
-		Location: l,
-	})
 }
 
 type FreeForAllModel struct {
