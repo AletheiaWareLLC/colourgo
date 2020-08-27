@@ -23,6 +23,7 @@ import (
 )
 
 type Model interface {
+	Bind()
 	Draw(func(*Location, *Colour))
 	Mine() error
 	Refresh() error
@@ -94,6 +95,10 @@ func NewBaseModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 	}
 	go m.Refresh()
 	return m
+}
+
+func (m *BaseModel) Bind() {
+	// Do nothing
 }
 
 func (m *BaseModel) Draw(func(*Location, *Colour)) {

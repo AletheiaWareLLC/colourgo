@@ -27,6 +27,7 @@ import (
 )
 
 func awaitRead(t *testing.T, reads chan bool) {
+	t.Helper()
 	select {
 	case <-reads:
 	// Pass
@@ -55,6 +56,11 @@ func TestVoteModel_Read(t *testing.T) {
 	model := colourgo.NewVoteModel(node, nil, id, canvas, channel, func() {
 		reads <- true
 	})
+	if len(reads) != 0 {
+		t.Errorf("Unexpected read")
+		return
+	}
+	model.Bind()
 	awaitRead(t, reads)
 	model.Read()
 	awaitRead(t, reads)
