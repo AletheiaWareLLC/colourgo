@@ -24,10 +24,13 @@ import (
 
 type Model interface {
 	Bind()
-	Draw(func(*Location, *Colour))
-	Mine() error
 	Refresh() error
+
+	Draw(func(*Location, *Colour))
+
+	Read()
 	Write(*Location, *Colour) error
+	Mine() error
 }
 
 func GetModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, callback func()) (Model, error) {
@@ -102,6 +105,10 @@ func (m *BaseModel) Bind() {
 }
 
 func (m *BaseModel) Draw(func(*Location, *Colour)) {
+	// Do nothing
+}
+
+func (m *BaseModel) Read() {
 	// Do nothing
 }
 
