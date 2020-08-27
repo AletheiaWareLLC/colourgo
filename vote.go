@@ -79,7 +79,7 @@ func (m *VoteModel) Read() {
 	sort.Slice(m.Order, func(i, j int) bool {
 		return m.Entries[m.Order[i]].Record.Timestamp < m.Entries[m.Order[j]].Record.Timestamp
 	})
-	log.Println("Read Complete:", m.Channel.Name, m.Order)
+	log.Println("Read Complete:", m.Channel.Name, len(m.Order))
 	m.Unlock()
 	go func() {
 		if f := m.OnUpdate; f != nil {
@@ -136,7 +136,7 @@ func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string
 func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
 	m.Lock()
 	defer m.Unlock()
-	log.Println("Drawing:", m.Order)
+	log.Println("Drawing:", len(m.Order))
 	for _, id := range m.Order {
 		vote, ok := m.Votes[id]
 		if ok {
