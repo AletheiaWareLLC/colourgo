@@ -32,11 +32,22 @@ type VoteModel struct {
 
 func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel, callback func()) *VoteModel {
 	m := &VoteModel{
-		BaseModel: *NewBaseModel(node, listener, id, canvas, channel, callback),
-		Votes:     make(map[string]*Vote),
+		BaseModel: BaseModel{
+			Node:     node,
+			Listener: listener,
+			ID:       id,
+			Canvas:   canvas,
+			Channel:  channel,
+			OnUpdate: callback,
+			Entries:  make(map[string]*bcgo.BlockEntry),
+		},
+		Votes: make(map[string]*Vote),
 	}
 	m.Channel.AddTrigger(m.Read)
-	go m.Read()
+	go func() {
+		m.Refresh()
+		m.Read()
+	}()
 	return m
 }
 
@@ -100,9 +111,26 @@ type FreeForAllModel struct {
 }
 
 func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel, callback func()) *FreeForAllModel {
-	return &FreeForAllModel{
-		VoteModel: *NewVoteModel(node, listener, id, canvas, channel, callback),
+	m := &FreeForAllModel{
+		VoteModel: VoteModel{
+			BaseModel: BaseModel{
+				Node:     node,
+				Listener: listener,
+				ID:       id,
+				Canvas:   canvas,
+				Channel:  channel,
+				OnUpdate: callback,
+				Entries:  make(map[string]*bcgo.BlockEntry),
+			},
+			Votes: make(map[string]*Vote),
+		},
 	}
+	m.Channel.AddTrigger(m.Read)
+	go func() {
+		m.Refresh()
+		m.Read()
+	}()
+	return m
 }
 
 func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
