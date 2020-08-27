@@ -30,15 +30,14 @@ type Model interface {
 
 type BaseModel struct {
 	sync.Mutex
-	Node       *bcgo.Node
-	Listener   bcgo.MiningListener
-	ID         string
-	Canvas     *Canvas
-	Channel    *bcgo.Channel
-	IsUpdating bool
-	OnUpdate   func()
-	Entries    map[string]*bcgo.BlockEntry
-	Order      []string
+	Node     *bcgo.Node
+	Listener bcgo.MiningListener
+	ID       string
+	Canvas   *Canvas
+	Channel  *bcgo.Channel
+	OnUpdate func()
+	Entries  map[string]*bcgo.BlockEntry
+	Order    []string
 }
 
 func NewBaseModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, channel *bcgo.Channel, callback func()) *BaseModel {

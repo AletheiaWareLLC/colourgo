@@ -38,7 +38,6 @@ func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 	trigger := func() {
 		log.Println("Trigger:", m.Channel.Name)
 		m.Lock()
-		m.IsUpdating = true
 		if err := GetVotes(m.Channel, m.Node.Cache, m.Node.Network, func(entry *bcgo.BlockEntry, vote *Vote) error {
 			id := base64.RawURLEncoding.EncodeToString(entry.RecordHash)
 			_, ok := m.Votes[id]
@@ -61,10 +60,8 @@ func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 		sort.Slice(m.Order, func(i, j int) bool {
 			return m.Entries[m.Order[i]].Record.Timestamp < m.Entries[m.Order[j]].Record.Timestamp
 		})
-		m.IsUpdating = false
 		m.Unlock()
 		if f := m.OnUpdate; f != nil {
-			log.Println("Model updated, calling OnUpdate")
 			f()
 		}
 		go func() {
@@ -108,11 +105,6 @@ func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string
 }
 
 func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
-	if m.IsUpdating {
-		// Canvas will be redrawn after update
-		log.Println("Model updating, canvas redraw ignored")
-		return
-	}
 	for _, id := range m.Order {
 		vote, ok := m.Votes[id]
 		if ok {
