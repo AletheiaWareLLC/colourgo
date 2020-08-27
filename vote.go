@@ -107,7 +107,7 @@ func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
 	for _, id := range m.Order {
 		vote, ok := m.Votes[id]
 		if ok {
-			//log.Println("Vote:", id, m.Entries[id].Record.Timestamp, vote)
+			log.Println("Drawing Vote:", id, m.Entries[id].Record.Timestamp, vote)
 			callback(vote.Location, vote.Colour)
 		}
 	}
