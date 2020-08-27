@@ -64,6 +64,7 @@ func NewVoteModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canv
 		m.IsUpdating = false
 		m.Unlock()
 		if f := m.OnUpdate; f != nil {
+			log.Println("Model updated, calling OnUpdate")
 			f()
 		}
 		go func() {
@@ -109,6 +110,7 @@ func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string
 func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
 	if m.IsUpdating {
 		// Canvas will be redrawn after update
+		log.Println("Model updating, canvas redraw ignored")
 		return
 	}
 	for _, id := range m.Order {
