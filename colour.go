@@ -76,47 +76,6 @@ func OpenVoteChannel(id string) *bcgo.Channel {
 	return bcgo.OpenPoWChannel(GetVoteChannelName(id), COLOUR_THRESHOLD)
 }
 
-func GetModel(node *bcgo.Node, listener bcgo.MiningListener, id string, canvas *Canvas, callback func()) (Model, error) {
-	switch canvas.Mode {
-	case Mode_FREE_FOR_ALL:
-		name := GetVoteChannelName(id)
-		channel := node.GetOrOpenChannel(name, func() *bcgo.Channel {
-			return OpenVoteChannel(id)
-		})
-		return NewFreeForAllModel(node, listener, id, canvas, channel, callback), nil
-		/* TODO
-		   case Mode_DEMOCRACY:
-		       name := GetVoteChannelName(id)
-		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
-		           return OpenVoteChannel(id)
-		       })
-		       return NewDemocracyModel(node, listener, id, canvas, channel, callback), nil
-		   case Mode_RADICAL_DEMOCRACY:
-		       name := GetVoteChannelName(id)
-		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
-		           return OpenVoteChannel(id)
-		       })
-		       return NewRadicalDemocracyModel(node, listener, id, canvas, channel, callback), nil
-		   case Mode_MARKET:
-		       name := GetPurchaseChannelName(id)
-		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
-		           return OpenPurchaseChannel(id)
-		       })
-		       return NewMarketModel(node, listener, id, canvas, channel, callback), nil
-		   case Mode_RADICAL_MARKET:
-		       name := GetPurchaseChannelName(id)
-		       channel := m.Node.GetOrOpenChannel(name, func() *bcgo.Channel {
-		           return OpenPurchaseChannel(id)
-		       })
-		       return NewRadicalMarketModel(node, listener, id, canvas, channel, callback), nil
-		*/
-	case Mode_UNKNOWN_MODE:
-		fallthrough
-	default:
-		return nil, fmt.Errorf("Unrecognized Canvas Mode: %s", canvas.Mode.String())
-	}
-}
-
 func CreateRecord(alias string, key *rsa.PrivateKey, data []byte) (*bcgo.Record, error) {
 	signature, err := cryptogo.CreateSignature(key, cryptogo.Hash(data), cryptogo.SignatureAlgorithm_SHA512WITHRSA_PSS)
 	if err != nil {
