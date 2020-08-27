@@ -130,7 +130,9 @@ func GetVotes(votes *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, callb
 			if err != nil {
 				return err
 			}
-			callback(entry, v)
+			if err := callback(entry, v); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
