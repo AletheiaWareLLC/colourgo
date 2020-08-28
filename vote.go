@@ -54,7 +54,7 @@ func (m *VoteModel) Bind() {
 }
 
 func (m *VoteModel) Read() {
-	log.Println("Read:", m.Channel.Name)
+	log.Println("Read:", m.Channel.Name, len(m.Order), len(m.Votes))
 	m.Lock()
 	if err := GetVotes(m.Channel, m.Node.Cache, m.Node.Network, func(entry *bcgo.BlockEntry, vote *Vote) error {
 		id := base64.RawURLEncoding.EncodeToString(entry.RecordHash)
@@ -81,7 +81,7 @@ func (m *VoteModel) Read() {
 	sort.Slice(m.Order, func(i, j int) bool {
 		return m.Entries[m.Order[i]].Record.Timestamp < m.Entries[m.Order[j]].Record.Timestamp
 	})
-	log.Println("Read Complete:", m.Channel.Name, len(m.Order))
+	log.Println("Read Complete:", m.Channel.Name, len(m.Order), len(m.Votes))
 	m.Unlock()
 	go func() {
 		if f := m.OnUpdate; f != nil {
@@ -132,7 +132,7 @@ func NewFreeForAllModel(node *bcgo.Node, listener bcgo.MiningListener, id string
 func (m *FreeForAllModel) Draw(callback func(*Location, *Colour)) {
 	m.Lock()
 	defer m.Unlock()
-	log.Println("Drawing:", len(m.Order))
+	log.Println("Drawing:", len(m.Order), len(m.Votes))
 	for _, id := range m.Order {
 		vote, ok := m.Votes[id]
 		if ok {
