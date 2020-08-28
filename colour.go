@@ -35,6 +35,8 @@ const (
 	COLOUR_PREFIX_CANVAS   = "Colour-Canvas-"   // Append Year
 	COLOUR_PREFIX_PURCHASE = "Colour-Purchase-" // Append Canvas ID
 	COLOUR_PREFIX_VOTE     = "Colour-Vote-"     // Append Canvas ID
+
+	MAX_NAME_LENGTH = 100
 )
 
 func GetColourHost() string {
@@ -64,16 +66,22 @@ func GetVoteChannelName(id string) string {
 	return COLOUR_PREFIX_VOTE + id
 }
 
+func OpenColourChannel(name string) *bcgo.Channel {
+	c := bcgo.OpenPoWChannel(name, COLOUR_THRESHOLD)
+	c.Validators = append(c.Validators, &bcgo.UniqueValidator{})
+	return c
+}
+
 func OpenCanvasChannel() *bcgo.Channel {
-	return bcgo.OpenPoWChannel(GetCanvasChannelName(), COLOUR_THRESHOLD)
+	return OpenColourChannel(GetCanvasChannelName())
 }
 
 func OpenPurchaseChannel(id string) *bcgo.Channel {
-	return bcgo.OpenPoWChannel(GetPurchaseChannelName(id), COLOUR_THRESHOLD)
+	return OpenColourChannel(GetPurchaseChannelName(id))
 }
 
 func OpenVoteChannel(id string) *bcgo.Channel {
-	return bcgo.OpenPoWChannel(GetVoteChannelName(id), COLOUR_THRESHOLD)
+	return OpenColourChannel(GetVoteChannelName(id))
 }
 
 func CreateRecord(alias string, key *rsa.PrivateKey, data []byte) (*bcgo.Record, error) {
